@@ -38,18 +38,12 @@ if [ "${OTRS_INSTALL}" != "yes" ]; then
     if [ -e "${OTRS_ROOT}var/tmp/firsttime" ]; then
       #Load default install
       load_defaults
-      #Set default admin user password
-      print_info "Setting password for default admin account \e[${OTRS_ASCII_COLOR_BLUE}mroot@localhost\e[0m to: \e[31m**********\e[0m"
-      su -c "${OTRS_ROOT}bin/otrs.Console.pl Admin::User::SetPassword root@localhost ${OTRS_ROOT_PASSWORD}" -s /bin/bash otrs
     fi
   # If OTRS_INSTALL == restore, load the backup files in ${OTRS_ROOT}/backups
   elif [ "${OTRS_INSTALL}" == "restore" ];then
     print_info "Restoring OTRS backup: \e[${OTRS_ASCII_COLOR_BLUE}m${OTRS_BACKUP_DATE}\e[0m for host \e[${OTRS_ASCII_COLOR_BLUE}m${OTRS_HOSTNAME}\e[0m"
     restore_backup ${OTRS_BACKUP_DATE}
   fi
-
-  # Ensure configuration is up to date with latest defaults and environment variables
-  setup_otrs_config
 
   # Only adjust permissions if OTRS_SET_PERMISSIONS == yes
   if [ "${OTRS_SET_PERMISSIONS}" == "yes" ]; then
@@ -62,6 +56,15 @@ if [ "${OTRS_INSTALL}" != "yes" ]; then
   else
     print_info "OTRS_SET_PERMISSIONS set to \e[${OTRS_ASCII_COLOR_RED}mno\e[0m, Skipping setting permissions"
   fi
+
+  if [ "${OTRS_INSTALL}" == "no" ] && [ -e "${OTRS_ROOT}var/tmp/firsttime" ]; then
+    #Set default admin user password
+    print_info "Setting password for default admin account \e[${OTRS_ASCII_COLOR_BLUE}mroot@localhost\e[0m to: \e[31m**********\e[0m"
+    su -c "${OTRS_ROOT}bin/otrs.Console.pl Admin::User::SetPassword root@localhost ${OTRS_ROOT_PASSWORD}" -s /bin/bash otrs
+  fi
+
+  # Ensure configuration is up to date with latest defaults and environment variables
+  setup_otrs_config
 
   # Enable/disable the installation of not allowed packages
   not_allowed_pkgs_install

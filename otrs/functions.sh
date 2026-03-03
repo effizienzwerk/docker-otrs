@@ -182,9 +182,6 @@ function restore_backup() {
     print_info "Done."
   fi
 
-  #Restore configured password overwritten by restore
-  setup_otrs_config
-
   #Copy back skins over restored files
   [ ! -z ${OTRS_CUSTOMER_SKIN} ] && cp -rfp ${tmpdir}/* ${SKINS_PATH} && rm -fr ${tmpdir}
 
@@ -205,21 +202,27 @@ function add_config_value() {
   local value=${2}
   local mask=${3:-false}
 
+  local value_perl_escaped="${value//\\/\\\\}"
+  value_perl_escaped="${value_perl_escaped//\'/\\\'}"
+
+  local value_sed_escaped="${value_perl_escaped//&/\\&}"
+  value_sed_escaped="${value_sed_escaped//\//\\\/}"
+
   if [ "${mask}" == true ]; then
     print_value="**********"
   else
     print_value=${value}
   fi
 
-  grep -qE \{\'\?${key}\'\?\} ${OTRS_CONFIG_FILE}
+  grep -qE "['\"]${key}['\"]" ${OTRS_CONFIG_FILE}
   if [ $? -eq 0 ]
   then
     print_info "Updating configuration option \e[${OTRS_ASCII_COLOR_BLUE}m${key}\e[0m with value: \e[31m${print_value}\e[0m"
-    sed  -i -r "s/($Self->\{*$key*\} *= *).*/\1\"${value}\";/" ${OTRS_CONFIG_FILE}
+    sed  -i -r "s/(\\\$Self->\{['\"]*${key}['\"]*\} *= *).*/\1'${value_sed_escaped}';/" ${OTRS_CONFIG_FILE}
   else
     print_info "Adding configuration option \e[${OTRS_ASCII_COLOR_BLUE}m${key}\e[0m with value: \e[31m${print_value}\e[0m"
-    sed -i "/$Self->{Home} = '\/opt\/otrs';/a \
-    \$Self->{'${key}'} = '${value}';" ${OTRS_CONFIG_FILE}
+    sed -i "/\\\$Self->{Home} = '\/opt\/otrs';/a \
+    \$Self->{'${key}'} = '${value_perl_escaped}';" ${OTRS_CONFIG_FILE}
   fi
 }
 
@@ -236,6 +239,7 @@ function setup_otrs_config() {
   [ ! -z "${OTRS_LANGUAGE}" ] && add_config_value "DefaultLanguage" ${OTRS_LANGUAGE}
   [ ! -z "${OTRS_TIMEZONE}" ] && add_config_value "OTRSTimeZone" ${OTRS_TIMEZONE} && add_config_value "UserDefaultTimeZone" ${OTRS_TIMEZONE}
   add_config_value "FQDN" ${OTRS_HOSTNAME}
+  add_config_value "Separator" "&"
   #Set email SMTP configuration
 
   [ ! -z "${OTRS_SENDMAIL_MODULE}" ] && add_config_value "SendmailModule" "Kernel::System::Email::${OTRS_SENDMAIL_MODULE}"
@@ -259,8 +263,6 @@ function load_defaults() {
   local current_version_file="${OTRS_CONFIG_DIR}/current_version"
 
   # Check if OTRS minor version changed and do a minor version upgrade
-  #Setup OTRS configuration
-  setup_otrs_config
 
   #Check if database doesn't exists yet (it could if this is a container redeploy)
   $mysqlcmd -e "use ${OTRS_DB_NAME}"

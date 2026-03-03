@@ -48,6 +48,9 @@ if [ "${OTRS_INSTALL}" != "yes" ]; then
     restore_backup ${OTRS_BACKUP_DATE}
   fi
 
+  # Ensure configuration is up to date with latest defaults and environment variables
+  setup_otrs_config
+
   # Only adjust permissions if OTRS_SET_PERMISSIONS == yes
   if [ "${OTRS_SET_PERMISSIONS}" == "yes" ]; then
     print_info "Setting OTRS permissions"

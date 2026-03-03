@@ -22,7 +22,7 @@
 
 function enable_debug_mode () {
   print_info "Preparing debug mode..."
-  yum install -y telnet dig
+  apt-get update && apt-get install -y telnet dnsutils
   [ $? -gt 0 ] && print_error "ERROR: Could not intall debug tools." && exit 1
   print_info "Done."
   env
@@ -251,32 +251,14 @@ function setup_otrs_config() {
 }
 
 function load_defaults() {
-  local current_version_file="${OTRS_CONFIG_DIR}/current_version"
-
-  # Check if OTRS minor version changed and do a minor version upgrade
-  if [ -e ${current_version_file} ] && [ ${OTRS_UPGRADE} != "yes" ]; then
-    current_version=$(cat ${current_version_file})
-    new_version=$(echo ${OTRS_VERSION}|cut -d'-' -f1)
-    print_info "Current installed OTRS version: \e[1;31m$current_version\e[1;0m"
-    print_info "Starting up container with OTRS version: \e[1;31m$new_version\e[1;0m"
-    check_version ${current_version} ${new_version}
-    if [ $? -eq 1 ]; then
-      print_info "Doing minor version upgrade from \e[${OTRS_ASCII_COLOR_BLUE}m${current_version}\e[0m to \e[${OTRS_ASCII_COLOR_RED}m${new_version}\e[0m"
-      upgrade_minor_version
-      upgrade_modules
-      _MINOR_VERSION_UPGRADE=true
-      echo ${new_version} > ${current_version_file}
-    fi
-  else
-    current_version=$(cat ${OTRS_ROOT}/RELEASE |grep VERSION|cut -d'=' -f2)
-    current_version="${current_version## }"
-    echo "${current_version}" > "${current_version_file}"
-  fi
-
   #Check if a host-mounted volume for configuration storage was added to this
   #container
   check_host_mount_dir
   check_custom_skins_dir
+
+  local current_version_file="${OTRS_CONFIG_DIR}/current_version"
+
+  # Check if OTRS minor version changed and do a minor version upgrade
   #Setup OTRS configuration
   setup_otrs_config
 
@@ -431,7 +413,7 @@ function install_modules () {
 
 # SIGTERM-handler
 function term_handler () {
- systemctl stop supervisord
+ pkill supervisord
  pkill -SIGTERM anacron
  su -c "${OTRS_ROOT}bin/otrs.Daemon.pl stop" -s /bin/bash otrs
  exit 143; # 128 + 15 -- SIGTERM

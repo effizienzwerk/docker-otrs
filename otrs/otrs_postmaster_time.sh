@@ -8,7 +8,7 @@ OTRS_POSTMASTER_FETCH_TIME=$1
 
 [ -z $OTRS_POSTMASTER_FETCH_TIME ] && echo -e "Need to pass fetch emails time in minutes." && exit 1
 
-CRONTAB_FILE="/var/spool/cron/otrs"
+CRONTAB_FILE="/var/spool/cron/crontabs/otrs"
 
 cp $CRONTAB_FILE "$CRONTAB_FILE.old"
 

@@ -51,11 +51,11 @@ if [ "${OTRS_INSTALL}" != "yes" ]; then
   # Only adjust permissions if OTRS_SET_PERMISSIONS == yes
   if [ "${OTRS_SET_PERMISSIONS}" == "yes" ]; then
     print_info "Setting OTRS permissions"
-    ${OTRS_ROOT}bin/otrs.SetPermissions.pl --otrs-user=otrs --web-group=apache ${OTRS_ROOT}
+    ${OTRS_ROOT}bin/otrs.SetPermissions.pl --otrs-user=otrs --web-group=www-data ${OTRS_ROOT}
   elif [ "${OTRS_SET_PERMISSIONS}" == "skip-article-dir" ]; then
     # Adjust permissions but skip articles directory if OTRS_SET_PERMISSIONS == skip-article-dir
     print_info "Setting permissions but skipping articles directory"
-    ${OTRS_ROOT}bin/otrs.SetPermissions.pl --otrs-user=otrs --web-group=apache ${OTRS_ROOT} --skip-article-dir
+    ${OTRS_ROOT}bin/otrs.SetPermissions.pl --otrs-user=otrs --web-group=www-data ${OTRS_ROOT} --skip-article-dir
   else
     print_info "OTRS_SET_PERMISSIONS set to \e[${OTRS_ASCII_COLOR_RED}mno\e[0m, Skipping setting permissions"
   fi
@@ -88,7 +88,7 @@ else
   #If neither of previous cases is true the installer will be run.
   print_info "Starting \e[${OTRS_ASCII_COLOR_BLUE}m OTRS $OTRS_VERSION \e[0minstaller !!"
   check_host_mount_dir
-  ${OTRS_ROOT}bin/otrs.SetPermissions.pl --otrs-user=otrs --web-group=apache ${OTRS_ROOT}
+  ${OTRS_ROOT}bin/otrs.SetPermissions.pl --otrs-user=otrs --web-group=www-data ${OTRS_ROOT}
 fi
 
 # Delete default configuration
